@@ -262,10 +262,12 @@ nano ~/.near/node_key.json
 nano ~/.near/validator_key.json
 ```
 
-# Challenge 003
+### Challenge 003
+
 ### Mounting Staking Pool
 
 Membuat Staking Pool
+
 ```
 near call factory.shardnet.near create_staking_pool '{"staking_pool_id": "nama_wallet", "owner_id": "xx.shardnet.near", "stake_public_key": "public_key_kamu", "reward_fee_fraction": {"numerator": 5, "denominator": 100}, "code_hash":"DD428g9eqLL8fWUxv8QSpVFzyHi1Qd16P8ephYCTmMSZ"}' --accountId="xx.shardnet.near" --amount=30 --gas=300000000000000
 ```
@@ -276,29 +278,155 @@ near call factory.shardnet.near create_staking_pool '{"staking_pool_id": "nama_w
  
  >jika berhasil akan muncul seperti yang ada digambar,anda bisa coppy link explorer untuk melihat nya langsung di explorer 
 
-Deposit dan Stake NEAR
+# Deposit dan Stake NEAR
 ```
 near call xx.factory.shardnet.near deposit_and_stake --amount jumlah --accountId xx.shardnet.near --gas=300000000000000
 ```
 > edit xx menjadi nama wallet kamu dan ubah kata jumlah yang mau kamu inginkan,NOTE jangan masukan semua balance yang kamu punya
 
-(OPTIONAL) untuk mencoba fitur unstake dalam jumlah yang anda inginkan atau unstake semua 
-unstake dalam jumlah
+ 
+# unstake dalam jumlah
+
 ```
 near call xx.factory.shardnet.near unstake '{"amount": "jumlah"}' --accountId xx.shardnet.near --gas=300000000000000
 ```
 
-unstake semua
+# unstake semua
 ```
 near call xx.factory.shardnet.near unstake_all --accountId xx.shardnet.near --gas=300000000000000
 ```
 
 > edit xx menjadi nama wallet kamu dan ubah kata jumlah yang mau kamu inginkan dan Unstaking membutuhkan waktu 2-3 epoch agar bisa di withdraw 
 
-Withdraw
+# Withdraw
 
 ```
 near call xx.factory.shardnet.near withdraw_all --accountId xx.shardnet.near --gas=300000000000000
 ```
 > edit xx menjadi nama wallet kamu
 
+# Ping
+
+```
+near call xx.factory.shardnet.near ping '{}' --accountId xx.shardnet.near --gas=300000000000000
+```
+
+# Total Balance
+
+```
+near view xx.factory.shardnet.near get_account_total_balance '{"account_id": "xx.shardnet.near"}'
+```
+
+# Staked Balance
+
+```
+near view xx.factory.shardnet.near get_account_staked_balance '{"account_id": "xx.shardnet.near"}'
+```
+
+# Unstaked Balance
+
+```
+near view xx.factory.shardnet.near get_account_unstaked_balance '{"account_id": "xx.shardnet.near"}'
+```
+
+# Available for Withdrawal
+
+```
+near view xx.factory.shardnet.near is_account_unstaked_balance_available '{"account_id": "xx.shardnet.near"}'
+```
+
+# Pause / Resume Staking
+
+```
+near call xx.factory.shardnet.near pause_staking '{}' --accountId xx.shardnet.near
+```
+
+```
+near call xx.factory.shardnet.near resume_staking '{}' --accountId xx.shardnet.near
+```
+
+> edit xx menjadi nama wallet kamu
+
+### Challenge 004
+
+# Membuat Monitoring Node Status
+
+```
+sudo apt install curl jq
+```
+
+```
+curl -s http://127.0.0.1:3030/status | jq .version
+```
+
+# Cek Delegators dan Stake
+```
+near view xx.factory.shardnet.near get_accounts '{"from_index": 0, "limit": 10}' --accountId xx.shardnet.near
+```
+
+> edit xx menjadi nama wallet kamu
+
+### Cek Block Produced
+
+```
+curl -s -d '{"jsonrpc": "2.0", "method": "validators", "id": "dontcare", "params": [null]}' -H 'Content-Type: application/json' 127.0.0.1:3030 | jq -c '.result.prev_epoch_kickout[] | select(.account_id | contains ("xx.factory.shardnet.near"))' | jq .reason
+```
+
+# Cek Reason Validator Kicked
+
+```
+curl -s -d '{"jsonrpc": "2.0", "method": "validators", "id": "dontcare", "params": [null]}' -H 'Content-Type: application/json' 127.0.0.1:3030 | jq -c '.result.prev_epoch_kickout[] | select(.account_id | contains ("xx.factory.shardnet.near"))' | jq .reason
+```
+
+# Cek Sinkronisasi
+```
+curl -s http://127.0.0.1:3030/status | jq .sync_info
+```
+
+> Pastikan status syncing adalah false
+
+### Membuat Ping Otomatis Setiap 5 Menit
+```
+mkdir $HOME/nearcore/logs
+```
+
+```
+nano $HOME/nearcore/scripts/ping.sh
+```
+
+> paste kode dibawah ini ,XX dirubah menjadi nama wallet kamu 
+
+#!/bin/sh
+# Ping call to renew Proposal added to crontab
+```
+export NEAR_ENV=shardnet
+export LOGS=$HOME/nearcore/logs
+export POOLID="xx"
+export ACCOUNTID="xx"
+
+echo "---" >> $LOGS/all.log
+date >> $LOGS/all.log
+near call $POOLID.factory.shardnet.near ping '{}' --accountId $ACCOUNTID.shardnet.near --gas=300000000000000 >> $LOGS/all.log
+near proposals | grep $POOLID >> $LOGS/all.log
+near validators current | grep $POOLID >> $LOGS/all.log
+near validators next | grep $POOLID >> $LOGS/all.log
+```
+# crontab
+```
+crontab -e
+```
+> tekan nomor 1 enter
+
+# masukan kode dibawah ini di paling bawah
+
+```
+*/5 * * * * sh $HOME/nearcore/scripts/ping.sh
+```
+
+> CTRL + O enter CTRL + X enter
+
+# Cek Log
+
+```
+cat $HOME/nearcore/logs/all.log
+```
