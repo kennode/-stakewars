@@ -124,7 +124,7 @@ git fetch
 ```
 
 ```
-git checkout 0f81dca95a55f975b6e54fe6f311a71792e21698
+git checkout 0d7f272afabc00f4a076b1c89a70ffc62466efe9
 ```
 
 ```
@@ -253,6 +253,16 @@ nano ~/.near/validator_key.json
 ```
 > temukan kata private_key dan mengubahnya menjadi secret_key kemudian CTRL + O enter CTRL + X  enter
 
+ Konten file harus dalam pola berikut:
+
+```
+ {
+  "account_id": "xx.factory.shardnet.near",
+  "public_key": "ed25519:HeaBJ3xLgvZacQWmEctTeUqyfSU4SDEnEwckWxd92W2G",
+  "secret_key": "ed25519:****"
+}
+```
+
 > NOTE simpan isi file node_key.json dan validator_key.json ditempat aman ,dan jangan sampai hilang.!
 ```
 nano ~/.near/node_key.json
@@ -264,7 +274,7 @@ nano ~/.near/validator_key.json
 
 ### Challenge 003
 
-### Mounting Staking Pool
+# Mounting Staking Pool
 
 Membuat Staking Pool
 
@@ -372,18 +382,33 @@ near view xx.factory.shardnet.near get_accounts '{"from_index": 0, "limit": 10}'
 curl -s -d '{"jsonrpc": "2.0", "method": "validators", "id": "dontcare", "params": [null]}' -H 'Content-Type: application/json' 127.0.0.1:3030 | jq -c '.result.prev_epoch_kickout[] | select(.account_id | contains ("xx.factory.shardnet.near"))' | jq .reason
 ```
 
-# Cek Reason Validator Kicked
+### Cek Reason Validator Kicked
 
 ```
 curl -s -d '{"jsonrpc": "2.0", "method": "validators", "id": "dontcare", "params": [null]}' -H 'Content-Type: application/json' 127.0.0.1:3030 | jq -c '.result.prev_epoch_kickout[] | select(.account_id | contains ("xx.factory.shardnet.near"))' | jq .reason
 ```
 
-# Cek Sinkronisasi
+### Cek Sinkronisasi
 ```
 curl -s http://127.0.0.1:3030/status | jq .sync_info
 ```
 
 > Pastikan status syncing adalah false
+
+# Challenge 005 (OPTIONAL)
+
+> Kirim formulir dengan artikel Anda.
+
+> Kriteria penerimaan:
+- Dokumentasikan proses dan publikasikan (GitHub atau Medium)
+- Sertakan petunjuk langkah demi langkah untuk memasang validator simpul menggunakan petunjuk Perang Pasak (Tantangan 001, 002, 003, dan 004).
+- Sertakan tangkapan layar dan deskripsi terperinci tentang prosesnya.
+- Sertakan harga untuk menjalankan validator.
+- Artikel dapat dilakukan dalam bahasa apa pun. Sebuah review dapat dilakukan untuk penerimaan.
+
+https://docs.google.com/forms/d/e/1FAIpQLScp9JEtpk1Fe2P9XMaS9Gl6kl9gcGVEp3A5vPdEgxkHx3ABjg/viewform
+
+# Challenge 006
 
 ### Membuat Ping Otomatis Setiap 5 Menit
 ```
@@ -411,22 +436,113 @@ near proposals | grep $POOLID >> $LOGS/all.log
 near validators current | grep $POOLID >> $LOGS/all.log
 near validators next | grep $POOLID >> $LOGS/all.log
 ```
-# crontab
+### crontab
 ```
 crontab -e
 ```
 > tekan nomor 1 enter
 
-# masukan kode dibawah ini di paling bawah
+### masukan kode dibawah ini di paling bawah
 
 ```
-*/5 * * * * sh $HOME/nearcore/scripts/ping.sh
+0 */2 * * * sh /home/<USER_ID>/scripts/ping.sh
 ```
 
 > CTRL + O enter CTRL + X enter
 
-# Cek Log
+### Cek Log
 
 ```
 cat $HOME/nearcore/logs/all.log
 ```
+
+> kamu bisa melihat hasilnya di explorer dan akan terlihat seperti ini
+
+![image](https://user-images.githubusercontent.com/109859686/181278477-ccfce3be-70db-4374-9ec5-90d83a35c107.png)
+
+> submit form 
+
+- Challenge URL: The link to the explorer of your staking pool.
+- Challenge image: Screenshots of PING transaction being done periodically.
+
+https://docs.google.com/forms/d/e/1FAIpQLScp9JEtpk1Fe2P9XMaS9Gl6kl9gcGVEp3A5vPdEgxkHx3ABjg/viewform
+
+# Challenge 007 (optional)
+
+> Kriteria penerimaan
+
+- Mohon berikan wawasan data selain yang bisa langsung kami dapatkan dari dompet NEAR explorer / NEAR.
+- Adapun hasilnya, dasbor data yang divisualisasikan lebih disukai, juga spreadsheet dengan data yang terstruktur dengan baik juga dapat diterima.
+- Apa yang dapat kami pelajari dari data sebenarnya penting, jadi harap berikan juga ringkasan tentang bagaimana Anda menginterpretasikan data dan bagaimana kami dapat meningkatkan sistem NEAR berdasarkan pekerjaan Anda.
+- Analisis dengan data mainnet NEAR sangat disarankan. Anda juga dapat menganalisis data dari testnet atau shardnet, tetapi mainnet memiliki transaksi yang lebih nyata dan kompleks.
+
+# Challenge 008 ( OPTIONAL)
+
+### Install cargo and Rust in case you don't have it. This command is for Linux or MacOS.
+
+```
+curl --proto '=https' --tlsv1.2 https://sh.rustup.rs -sSf | sh
+
+source $HOME/.cargo/env
+```
+
+```
+rustup target add wasm32-unknown-unknown
+```
+
+### Clone the project found https://github.com/zavodil/near-staking-pool-owner
+
+```
+git clone https://github.com/zavodil/near-staking-pool-owner
+```
+
+### Kompilasi kontrak pintar
+
+```
+cd near-staking-pool-owner/contract
+rustup target add wasm32-unknown-unknown
+cargo build --target wasm32-unknown-unknown --release
+```
+
+### Terapkan kontrak pintar di akun pemilik Anda. Sesuaikan jalur ke file .wasm jika diperlukan.
+
+```
+NEAR_ENV=shardnet near deploy <OWNER_ID>.shardnet.near --wasmFile target/wasm32-unknown-unknown/release/contract.wasm
+```
+
+### Inisialisasi akun pengambilan kontrak pintar untuk membagi pendapatan.
+
+
+CONTRACT_ID=<OWNER_ID>.shardnet.near
+
+```
+# Change numerator and denomitor to adjust the % for split.
+near call $CONTRACT_ID new '{"staking_pool_account_id": "<STAKINGPOOL_ID>.factory.shardnet.near", "owner_id":"<OWNER_ID>.shardnet.near", "reward_receivers": [["<SPLITED_ACCOUNT_ID_1>.shardnet.near", {"numerator": 3, "denominator":10}], ["<SPLITED_ACCOUNT_ID_2>.shardnet.near", {"numerator": 70, "denominator":100}]]}' --accountId $CONTRACT_ID
+```
+
+### Tunggu hingga Anda mulai menerima hadiah di kumpulan staking node Anda
+
+Lakukan penarikan hadiah.
+
+```
+CONTRACT_ID=<OWNER_ID>.shardnet.near
+NEAR_ENV=shardnet near call $CONTRACT_ID withdraw '{}' --accountId $CONTRACT_ID --gas 200000000000000
+```
+
+### Challenge submission
+
+- Challenge URL: The link to the explorer of your withdraw transaction.
+- Challenge image: Screenshots of tokens distribution transaction.
+
+> contoh tangkapan layar seperti ini
+
+![image](https://user-images.githubusercontent.com/109859686/181284933-1556b179-697c-4051-9290-c0723e9ed49e.png)
+
+- isi form https://docs.google.com/forms/d/e/1FAIpQLScp9JEtpk1Fe2P9XMaS9Gl6kl9gcGVEp3A5vPdEgxkHx3ABjg/viewform
+
+- 
+- 
+- 
+- 
+
+# TERIMAKASIH TELAH MENGIKUTI TUTORIAL SAYA ,SEMOGA BERHASIL !!!
